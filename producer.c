@@ -11,8 +11,7 @@
 #undef NAME
 #define NAME "Producer"
 
-extern consumer_thread consumer_array[5];
-
+extern consumer_thread_manager consumer_thread_manager_instance;
 pthread_t producer_array[10];
 
 extern pthread_cond_t con_va;
@@ -21,7 +20,7 @@ extern list* message_list;
 
 static void list_append_message(void* data, void* arg)
 {
-    LOG("append Messag\n");
+    LOG("append : %s\n",data);
     list_append((list*)arg, data);
 }
 
@@ -30,9 +29,10 @@ void append_message(void* data)
     pthread_mutex_lock(&mutex);
     list_append(message_list,data);
     LOG("list size is : %d\n",message_list->size);
-    for(int i = 0;i<5;i++){
-        //consumer_array[i].list_buffer = list_copy(message_list);
-        list_for_each(message_list,&list_append_message,consumer_array[i].list_buffer);
+    for(int i = 0;i<consumer_thread_manager_instance.cb_size;i++){
+        list_for_each(message_list,
+                      &list_append_message,
+                      consumer_thread_manager_instance.consumer_array[i].list_buffer);
     }
     list_clear(message_list);
     LOG("clear list size is : %d\n",message_list->size);
